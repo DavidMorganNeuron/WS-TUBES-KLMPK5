@@ -253,6 +253,10 @@ final class OntologyMigrator
                 'dapatMelakukan' => ['Aktivitas', 'aktivitas-', 'menawarkanAktivitas'],
             ] as $sourceProperty => [$class, $prefix, $objectProperty]) {
                 foreach ($this->splitValues($row[$sourceProperty] ?? '', $unknownLabel) as $label) {
+                    if ($class === 'Aktivitas' && Str::slug($label) === 'menulusuri') {
+                        $label = 'Menelusuri';
+                    }
+
                     $resourceIri = $this->namedResource(
                         $triples,
                         $resources,

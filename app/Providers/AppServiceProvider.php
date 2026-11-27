@@ -6,6 +6,7 @@ use App\Services\Ontology\DestinationQueryBuilder;
 use App\Services\Ontology\DestinationRdfQueryBuilder;
 use App\Services\Ontology\DestinationRepository;
 use App\Services\Ontology\DestinationSource;
+use App\Services\Ontology\FailoverDestinationSource;
 use App\Services\Ontology\FusekiClient;
 use App\Services\Ontology\InMemoryDestinationSource;
 use App\Services\Ontology\OntologyConfiguration;
@@ -142,22 +143,27 @@ class AppServiceProvider extends ServiceProvider
             $ontologyConfig = config('ontology');
             OntologyConfiguration::validate($ontologyConfig);
 
-            if ($ontologyConfig['driver'] === 'ttl') {
-                return new InMemoryDestinationSource(
-                    parser: $app->make(TurtleParser::class),
-                    graphMapper: $app->make(OntologyGraphMapper::class),
-                    ttlPath: $ontologyConfig['ttl_path'],
-                    searchPlanner: $app->make(SearchPlanner::class),
-                    cacheTtl: $ontologyConfig['cache_ttl'],
-                );
-            }
-
-            return new SparqlDestinationSource(
-                client: $app->make(FusekiClient::class),
-                queryBuilder: $app->make(DestinationQueryBuilder::class),
-                rowMapper: $app->make(SparqlRowMapper::class),
+            $localSource = fn (): InMemoryDestinationSource => new InMemoryDestinationSource(
+                parser: $app->make(TurtleParser::class),
+                graphMapper: $app->make(OntologyGraphMapper::class),
+                ttlPath: $ontologyConfig['ttl_path'],
                 searchPlanner: $app->make(SearchPlanner::class),
                 cacheTtl: $ontologyConfig['cache_ttl'],
+            );
+
+            if ($ontologyConfig['driver'] === 'ttl') {
+                return $localSource();
+            }
+
+            return new FailoverDestinationSource(
+                primary: new SparqlDestinationSource(
+                    client: $app->make(FusekiClient::class),
+                    queryBuilder: $app->make(DestinationQueryBuilder::class),
+                    rowMapper: $app->make(SparqlRowMapper::class),
+                    searchPlanner: $app->make(SearchPlanner::class),
+                    cacheTtl: $ontologyConfig['cache_ttl'],
+                ),
+                fallback: $localSource(),
             );
         });
 

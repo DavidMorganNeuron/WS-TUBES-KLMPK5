@@ -7,8 +7,8 @@ return [
     | Ontology Driver
     |--------------------------------------------------------------------------
     |
-    | Supported: "fuseki" or "ttl". Fuseki failures are reported explicitly;
-    | the local Turtle file is selected only when the ttl driver is configured.
+    | Supported: "fuseki", "sparql", or "ttl". Fuseki/SPARQL failures
+    | automatically fall back to the local Turtle dataset.
     |
     */
 

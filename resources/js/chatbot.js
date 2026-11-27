@@ -383,10 +383,14 @@ const initChatbot = () => {
         persist();
     };
 
-    const handleRequestError = (error) => {
-        const message = error instanceof TypeError
-            ? 'Koneksi jaringan terputus. Periksa koneksi Anda, lalu coba lagi.'
-            : error.message;
+    const handleRequestError = (error, requestTimedOut = false) => {
+        const message = requestTimedOut || (error instanceof DOMException && error.name === 'AbortError')
+            ? 'Permintaan membutuhkan waktu terlalu lama. Periksa koneksi Anda, lalu coba lagi.'
+            : error instanceof TypeError
+                ? 'Koneksi jaringan terputus. Periksa koneksi Anda, lalu coba lagi.'
+                : error instanceof Error && error.message.trim() !== ''
+                    ? error.message
+                    : 'WayFinder AI sedang tidak dapat menjawab. Silakan coba lagi.';
 
         state.turns.push({ role: 'error', text: message });
         setStatus('WayFinder AI belum dapat membalas.');
@@ -398,15 +402,25 @@ const initChatbot = () => {
         }
 
         activeRequest = true;
-        state.pending = pending;
-        loading.classList.remove('hidden');
-        loading.setAttribute('aria-hidden', 'false');
-        syncSendState();
-        persist();
-        setStatus('WayFinder AI sedang memproses data.');
-        scrollToLatest();
+        let timeoutId = null;
+        let requestTimedOut = false;
 
         try {
+            state.pending = pending;
+            loading.classList.remove('hidden');
+            loading.setAttribute('aria-hidden', 'false');
+            syncSendState();
+            persist();
+            setStatus('WayFinder AI sedang memproses data.');
+            updateLayout();
+            scrollToLatest();
+
+            const controller = new AbortController();
+            timeoutId = window.setTimeout(() => {
+                requestTimedOut = true;
+                controller.abort();
+            }, 25000);
+
             const response = await fetch(chatUrl, {
                 method: 'POST',
                 headers: {
@@ -415,11 +429,16 @@ const initChatbot = () => {
                     'X-CSRF-TOKEN': csrfToken(),
                     'X-Requested-With': 'XMLHttpRequest',
                 },
+                signal: controller.signal,
                 body: JSON.stringify({
                     message: pending.message,
                     history: pending.history,
                 }),
             });
+
+            if (response.status === 419) {
+                throw new Error('Sesi halaman telah diperbarui, silakan muat ulang halaman lalu kirim pesan kembali.');
+            }
 
             let payload;
 
@@ -427,6 +446,10 @@ const initChatbot = () => {
                 payload = await response.json();
             } catch (error) {
                 throw new Error('Respons WayFinder AI tidak dapat dibaca. Silakan coba lagi.', { cause: error });
+            }
+
+            if (! payload || typeof payload !== 'object' || Array.isArray(payload)) {
+                throw new Error('Respons WayFinder AI tidak valid. Silakan coba lagi.');
             }
 
             if (! response.ok) {
@@ -446,10 +469,16 @@ const initChatbot = () => {
             setStatus('WayFinder AI telah membalas.');
         } catch (error) {
             userTurn.status = 'failed';
-            handleRequestError(error);
+            handleRequestError(error, requestTimedOut);
         } finally {
             state.pending = null;
             activeRequest = false;
+            loading.classList.add('hidden');
+            loading.setAttribute('aria-hidden', 'true');
+            sendButton.disabled = input.value.trim() === '';
+            if (timeoutId !== null) {
+                window.clearTimeout(timeoutId);
+            }
             persist();
             updateLayout();
             syncSendState();
@@ -481,10 +510,7 @@ const initChatbot = () => {
         const userTurn = { role: 'user', text: message, status: 'pending' };
 
         state.turns.push(userTurn);
-        state.pending = pending;
         input.value = '';
-        updateLayout();
-        persist();
         await sendPendingMessage(pending, userTurn);
     };
 

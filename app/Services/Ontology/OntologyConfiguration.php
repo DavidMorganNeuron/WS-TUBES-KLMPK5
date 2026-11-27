@@ -13,8 +13,8 @@ final class OntologyConfiguration
      */
     public static function validate(array $configuration): void
     {
-        if (! in_array($configuration['driver'] ?? null, ['fuseki', 'ttl'], true)) {
-            throw new InvalidArgumentException('ONTOLOGY_DRIVER harus bernilai "fuseki" atau "ttl".');
+        if (! in_array($configuration['driver'] ?? null, ['fuseki', 'sparql', 'ttl'], true)) {
+            throw new InvalidArgumentException('ONTOLOGY_DRIVER harus bernilai "fuseki", "sparql", atau "ttl".');
         }
 
         foreach (['ttl_path', 'v2_source_path', 'wikidata_regions_path'] as $pathKey) {

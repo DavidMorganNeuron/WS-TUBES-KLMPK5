@@ -36,6 +36,8 @@ final readonly class Destination
         public array $activities,
         public string $media,
         public ?float $rating,
+        public string $contact = '',
+        public string $website = '',
     ) {}
 
     /**
@@ -43,6 +45,17 @@ final readonly class Destination
      */
     public static function fromArray(array $data): self
     {
+        $phone = self::text($data['noHpResmi'] ?? '');
+        $email = self::text($data['emailResmi'] ?? '');
+        $instagram = self::text($data['instagramResmi'] ?? '');
+        $contact = self::text($data['contact'] ?? $data['kontakResmi'] ?? '');
+        if ($contact === '') {
+            $contact = implode(' | ', array_values(array_filter(
+                [$phone, $email],
+                static fn (string $value): bool => $value !== '',
+            )));
+        }
+
         return new self(
             id: self::text($data['idDestinasi'] ?? ''),
             name: self::text($data['namaDestinasi'] ?? ''),
@@ -58,13 +71,15 @@ final readonly class Destination
             directions: self::text($data['petunjukLokasi'] ?? ''),
             openingHours: self::text($data['jamOperasional'] ?? ''),
             prices: self::splitValues($data['hargaMasuk'] ?? ''),
-            phone: self::text($data['noHpResmi'] ?? ''),
-            email: self::text($data['emailResmi'] ?? ''),
-            instagram: self::text($data['instagramResmi'] ?? ''),
+            phone: $phone,
+            email: $email,
+            instagram: $instagram,
             facilities: self::splitValues($data['memilikiFasilitas'] ?? ''),
             activities: self::splitValues($data['dapatMelakukan'] ?? ''),
             media: self::text($data['memilikiMedia'] ?? ''),
             rating: self::rating($data['ratingPengunjung'] ?? null),
+            contact: $contact,
+            website: self::text($data['website'] ?? $data['websiteResmi'] ?? $data['urlWebsite'] ?? ''),
         );
     }
 
@@ -250,6 +265,10 @@ final readonly class Destination
 
     private static function text(mixed $value): string
     {
+        if (! is_scalar($value)) {
+            return '';
+        }
+
         $text = trim((string) $value);
 
         if (in_array($text, ['', '-', '(kosong)'], true)) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Services\Ontology\NorthSumatraCoverage;
+use App\Services\Ontology\OntologyGraphMapper;
 use App\Services\Ontology\OntologyMigrator;
 use App\Services\Ontology\OntologyValidator;
 use App\Services\Ontology\TurtleParser;
@@ -17,12 +18,13 @@ use Illuminate\Console\Command;
 use InvalidArgumentException;
 use JsonException;
 
-#[Signature('ontology:migrate-v3 {--source=} {--output=} {--report=} {--dry-run}')]
-#[Description('Migrasikan sumber Turtle v2 menjadi ontologi v3')]
+#[Signature('ontology:migrate-v3 {--source=} {--source-v3} {--output=} {--report=} {--dry-run}')]
+#[Description('Migrasikan sumber Turtle menjadi ontologi v3')]
 final class OntologyMigrateV3 extends Command
 {
     public function handle(
         TurtleParser $parser,
+        OntologyGraphMapper $graphMapper,
         OntologyMigrator $migrator,
         TurtleWriter $writer,
         OntologyValidator $validator,
@@ -71,8 +73,18 @@ final class OntologyMigrateV3 extends Command
         }
 
         try {
-            $rows = $parser->parseFile($sourcePath);
-            $approvedDestinationQids = $destinationLinks->load()['destinations_by_id'];
+            $rows = $this->option('source-v3')
+                ? $graphMapper->destinations($parser->parseTriplesFile($sourcePath))
+                : $parser->parseFile($sourcePath);
+            $approvedDestinationQidsById = $destinationLinks->load()['destinations_by_id'];
+            $sourceIds = [];
+            foreach ($rows as $row) {
+                $id = $row['idDestinasi'] ?? null;
+                if (is_string($id) && $id !== '') {
+                    $sourceIds[$id] = true;
+                }
+            }
+            $approvedDestinationQids = array_intersect_key($approvedDestinationQidsById, $sourceIds);
             $result = $migrator->migrate(
                 rows: $rows,
                 boundarySource: $boundarySource,
@@ -189,7 +201,7 @@ final class OntologyMigrateV3 extends Command
         $lines = [
             '# Laporan anomali data wisata Sumatera Utara',
             '',
-            '- Sumber: `'.str_replace(base_path().DIRECTORY_SEPARATOR, '', $sourcePath).'` (dibaca saja; tidak diubah).',
+            '- Sumber: `'.str_replace(base_path().DIRECTORY_SEPARATOR, '', $sourcePath).'` (dibaca sebelum berkas keluaran ditulis).',
             '- Relasi batas wilayah: '.$boundarySource['source'].'; diambil '.$boundarySource['retrieved_at'].'; wilayah diverifikasi sebagai Kabupaten/Kota Indonesia di Sumatera Utara.',
             '- Perbaikan otomatis dibatasi pada trim, deduplikasi, tipe literal, pemecahan kata kunci, dan aturan sentinel.',
             '- Anomali semantik di bawah tidak diperbaiki otomatis.',

@@ -229,7 +229,7 @@ class SparqlDestinationSourceTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    public function test_fuseki_detail_query_projects_opening_and_closing_times(): void
+    public function test_fuseki_detail_query_projects_all_chatbot_context_fields(): void
     {
         $queries = [];
         Http::preventStrayRequests();
@@ -242,6 +242,13 @@ class SparqlDestinationSourceTest extends TestCase
                 'jamBuka' => ['type' => 'literal', 'value' => '08:00:00'],
                 'jamTutup' => ['type' => 'literal', 'value' => '18:00:00'],
                 'bukaSepanjangWaktu' => ['type' => 'literal', 'value' => 'false'],
+                'hargaMasuk' => ['type' => 'literal', 'value' => 'Gratis'],
+                'noHpResmi' => ['type' => 'literal', 'value' => '08123456789'],
+                'emailResmi' => ['type' => 'literal', 'value' => 'info@example.test'],
+                'instagramResmi' => ['type' => 'literal', 'value' => 'https://instagram.com/example'],
+                'memilikiFasilitas' => ['type' => 'literal', 'value' => 'Gazebo'],
+                'dapatMelakukan' => ['type' => 'literal', 'value' => 'Berkemah'],
+                'deskripsiLengkap' => ['type' => 'literal', 'value' => 'Deskripsi lengkap uji.'],
             ]]));
         });
 
@@ -249,7 +256,18 @@ class SparqlDestinationSourceTest extends TestCase
 
         $this->assertNotNull($destination);
         $this->assertSame('08.00 - 18.00', $destination->openingHours);
+        $this->assertSame(['Gratis'], $destination->priceLabels());
+        $this->assertSame('08123456789', $destination->phone);
+        $this->assertSame('info@example.test', $destination->email);
+        $this->assertSame('https://instagram.com/example', $destination->instagram);
+        $this->assertSame(['Gazebo'], $destination->facilities);
+        $this->assertSame(['Berkemah'], $destination->activities);
+        $this->assertSame('Deskripsi lengkap uji.', $destination->fullDescription);
         $this->assertStringContainsString('(SAMPLE(STR(?alwaysOpenValue)) AS ?bukaSepanjangWaktu)', $queries[0]);
+        $this->assertStringContainsString('ws:keteranganTarif', $queries[0]);
+        $this->assertStringContainsString('ws:urlInstagram', $queries[0]);
+        $this->assertStringContainsString('ws:menyediakanFasilitas/rdfs:label', $queries[0]);
+        $this->assertStringContainsString('ws:menawarkanAktivitas/rdfs:label', $queries[0]);
         Http::assertSentCount(1);
     }
 

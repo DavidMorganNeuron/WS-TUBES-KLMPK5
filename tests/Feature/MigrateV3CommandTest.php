@@ -33,4 +33,31 @@ final class MigrateV3CommandTest extends TestCase
             File::deleteDirectory($root);
         }
     }
+
+    public function test_v3_source_migration_normalizes_traversal_activity_uris(): void
+    {
+        $root = sys_get_temp_dir().DIRECTORY_SEPARATOR.'wayfinder-migrate-v3-'.bin2hex(random_bytes(6));
+        File::makeDirectory($root, 0755, true);
+
+        $source = base_path('database/ontology/wisata_sumut_v3.ttl');
+        $output = $root.DIRECTORY_SEPARATOR.'wisata_sumut_v3.ttl';
+        $report = $root.DIRECTORY_SEPARATOR.'laporan-anomali-data.md';
+        $sourceHash = hash_file('sha256', $source);
+
+        try {
+            $this->artisan('ontology:migrate-v3', [
+                '--source' => $source,
+                '--source-v3' => true,
+                '--output' => $output,
+                '--report' => $report,
+            ])->assertExitCode(0);
+
+            $contents = (string) file_get_contents($output);
+            $this->assertSame($sourceHash, hash_file('sha256', $source));
+            $this->assertStringContainsString('aktivitas-menelusuri', $contents);
+            $this->assertStringNotContainsString('aktivitas-menulusuri', $contents);
+        } finally {
+            File::deleteDirectory($root);
+        }
+    }
 }

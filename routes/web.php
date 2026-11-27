@@ -46,6 +46,6 @@ Route::post('/routes/compute', [RouteController::class, 'compute'])
     ->middleware('throttle:20,1')
     ->name('routes.compute');
 
-Route::post('/chatbot/send', [ChatbotController::class, 'chat'])
+Route::post('/chat', [ChatbotController::class, 'chat'])
     ->middleware('throttle:10,1')
     ->name('chatbot.send');

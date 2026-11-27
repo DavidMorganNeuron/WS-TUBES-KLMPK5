@@ -135,7 +135,7 @@ SELECT ?destination ?idDestinasi ?namaDestinasi
     (SAMPLE(STR(?jamTutupValue)) AS ?jamTutup)
     (SAMPLE(STR(?jadwalValue)) AS ?keteranganJadwal)
     (SAMPLE(STR(?alwaysOpenValue)) AS ?bukaSepanjangWaktu)
-    (GROUP_CONCAT(DISTINCT STR(?priceValue); separator=" | ") AS ?hargaMasuk)
+    (GROUP_CONCAT(DISTINCT STR(?priceLabelValue); separator=" | ") AS ?hargaMasuk)
     (GROUP_CONCAT(DISTINCT STR(?phoneValue); separator=" | ") AS ?noHpResmi)
     (GROUP_CONCAT(DISTINCT STR(?emailValue); separator=" | ") AS ?emailResmi)
     (GROUP_CONCAT(DISTINCT STR(?instagramValue); separator=" | ") AS ?instagramResmi)
@@ -165,7 +165,19 @@ WHERE {
         OPTIONAL { ?schedule ws:keteranganJadwal ?jadwalValue . FILTER(STR(?jadwalValue) != "-") }
         OPTIONAL { ?schedule ws:bukaSepanjangWaktu ?alwaysOpenValue }
     }
-    OPTIONAL { ?destination ws:memilikiTarif/ws:hargaMasuk ?priceValue }
+    OPTIONAL {
+        ?destination ws:memilikiTarif ?tariff .
+        OPTIONAL { ?tariff ws:hargaMasuk ?priceValue }
+        OPTIONAL { ?tariff ws:keteranganTarif ?priceDescriptionValue }
+        BIND(
+            IF(
+                BOUND(?priceValue) && STR(?priceValue) != "-",
+                STR(?priceValue),
+                STR(?priceDescriptionValue)
+            ) AS ?priceLabelValue
+        )
+        FILTER(BOUND(?priceLabelValue) && ?priceLabelValue != "-")
+    }
     OPTIONAL { ?destination ws:memilikiKontak/ws:nomorHp ?phoneValue . FILTER(STR(?phoneValue) != "-") }
     OPTIONAL { ?destination ws:memilikiKontak/ws:email ?emailValue . FILTER(STR(?emailValue) != "-") }
     OPTIONAL { ?destination ws:memilikiKontak/ws:urlInstagram ?instagramValue . FILTER(STR(?instagramValue) != "-") }

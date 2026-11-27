@@ -45,6 +45,30 @@ class OntologyMigratorTest extends TestCase
         );
     }
 
+    public function test_migration_normalizes_the_misspelled_traversal_activity_iri(): void
+    {
+        $rows = (new TurtleParser)->parse($this->fixtureTurtle());
+        $rows[0]['dapatMelakukan'] = 'Menelusuri | Menulusuri';
+
+        $result = (new OntologyMigrator)->migrate(
+            $rows,
+            $this->boundarySource(),
+            '-',
+            15.0,
+            3,
+        );
+        $activityIris = array_values(array_unique(array_map(
+            static fn (array $triple): string => $triple['object']['value'],
+            array_filter(
+                $result['triples'],
+                static fn (array $triple): bool => $triple['subject'] === OntologyMigrator::DATA_NS.'ws-005'
+                    && $triple['predicate'] === OntologyMigrator::WS_NS.'menawarkanAktivitas',
+            ),
+        )));
+
+        $this->assertSame([OntologyMigrator::DATA_NS.'aktivitas-menelusuri'], $activityIris);
+    }
+
     public function test_destination_same_as_generation_is_idempotent_and_adds_only_approved_triple(): void
     {
         $rows = (new TurtleParser)->parse(str_replace('"-"', '"-"', $this->fixtureTurtle()));

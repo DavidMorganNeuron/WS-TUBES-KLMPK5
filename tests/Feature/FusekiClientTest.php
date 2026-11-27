@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\Ontology\DestinationRepository;
+use App\Services\Ontology\DestinationSource;
 use App\Services\Ontology\FusekiBackup;
 use App\Services\Ontology\FusekiClient;
 use App\Services\Ontology\OntologyConfiguration;
@@ -60,32 +61,37 @@ class FusekiClientTest extends TestCase
             && str_contains((string) ($request->data()['query'] ?? ''), 'ws:berkategori'));
     }
 
-    public function test_fuseki_unavailability_returns_503_without_falling_back_to_local_turtle(): void
+    public function test_sparql_unavailability_falls_back_to_local_turtle_for_pages(): void
     {
+        config()->set('ontology.driver', 'sparql');
+        app()->forgetInstance(DestinationSource::class);
+        app()->forgetInstance(DestinationRepository::class);
         Http::fake([
             'http://localhost:3030/WayFinder/sparql' => Http::response(['error' => 'private-server-detail'], 503),
         ]);
         Log::spy();
 
         $this->get('/destinations')
-            ->assertStatus(503)
-            ->assertSee('Layanan data destinasi sedang tidak tersedia.')
+            ->assertOk()
+            ->assertSee('Jelajahi Destinasi Sumatera Utara')
             ->assertDontSee('private-server-detail');
 
         Log::shouldHaveReceived('warning')->once();
     }
 
-    public function test_json_requests_receive_a_safe_503_response(): void
+    public function test_json_requests_receive_the_local_page_fallback_without_server_details(): void
     {
         config()->set('ontology.fuseki.dataset', 'internal-dataset');
+        app()->forgetInstance(DestinationSource::class);
+        app()->forgetInstance(DestinationRepository::class);
 
         Http::fake([
             'http://localhost:3030/internal-dataset/sparql' => Http::response(['error' => 'private-server-detail'], 404),
         ]);
 
         $this->getJson('/destinations')
-            ->assertStatus(503)
-            ->assertJsonPath('message', 'Layanan data destinasi sedang tidak tersedia. Silakan coba lagi nanti.')
+            ->assertOk()
+            ->assertSee('Jelajahi Destinasi Sumatera Utara')
             ->assertDontSee('private-server-detail')
             ->assertDontSee('internal-dataset')
             ->assertHeader('X-Content-Type-Options', 'nosniff')
@@ -136,6 +142,16 @@ class FusekiClientTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         OntologyConfiguration::validate($configuration);
+    }
+
+    public function test_sparql_driver_alias_is_supported(): void
+    {
+        $configuration = config('ontology');
+        $configuration['driver'] = 'sparql';
+
+        OntologyConfiguration::validate($configuration);
+
+        $this->assertSame('sparql', $configuration['driver']);
     }
 
     public function test_dataset_not_found_is_reported_without_creating_a_dataset(): void
