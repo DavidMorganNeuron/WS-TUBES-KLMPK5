@@ -28,6 +28,7 @@
     $mapConfig = [
         'markers' => $markers,
         'colors' => $typeColors,
+        'showAllIndividually' => $activeType !== '',
         'googleMapsKey' => $googleMapsKey,
         'routeComputeUrl' => route('routes.compute'),
     ];

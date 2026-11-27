@@ -13,6 +13,10 @@
     outline: none;
 }
 
+#destination-search-form input:focus-visible {
+    outline: none;
+}
+
 @theme {
     /* Warna kustom dari desain Figma */
   --color-brand-dark: #0b2921;

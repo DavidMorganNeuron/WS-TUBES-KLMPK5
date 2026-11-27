@@ -50,7 +50,30 @@ class DestinationPagesTest extends TestCase
         $response->assertSee('wayfinder.theme');
         $response->assertSee('Lewati ke konten utama');
         $response->assertSee('WayFinder');
+        $response->assertSee('data-live-suggest', false);
+        $response->assertSee('id="navbar-search-suggestions"', false);
+        $response->assertSee('aria-controls="navbar-search-suggestions"', false);
+        $response->assertSee('border border-transparent', false);
+        $response->assertSee('focus-within:outline-2', false);
+        $response->assertSee('z-[100] isolate', false);
+        $response->assertSee('z-[120] mt-2', false);
+        $response->assertDontSee('focus-within:border-emerald-900', false);
+        $response->assertSee('id="dashboard-search-suggestions"', false);
         $response->assertDontSee('Sumatera Heritage &amp; Trails');
+    }
+
+    public function test_primary_navigation_is_visible_without_a_mobile_menu(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk()
+            ->assertSee('aria-label="Navigasi utama"', false)
+            ->assertSee('order-4 flex w-full items-center justify-center', false)
+            ->assertSee('>Beranda</a>', false)
+            ->assertSee('>Destinasi</a>', false)
+            ->assertSee('>Peta</a>', false)
+            ->assertDontSee('id="btn-mobile-menu"', false)
+            ->assertDontSee('id="mobile-menu"', false);
     }
 
     public function test_chatbot_opens_as_a_resizable_popup_from_the_navigation(): void
@@ -83,10 +106,13 @@ class DestinationPagesTest extends TestCase
         $response->assertOk();
         $response->assertSee('Jelajahi Destinasi Sumatera Utara');
         $filterOptions = $this->repository()->filterOptions();
+        $response->assertSee('aria-label="Filter destinasi"', false);
+        $response->assertSee('data-category-pills', false);
+        $response->assertSee('form="destination-search-form"', false);
         $response->assertSee('<select name="dapatMelakukan"', false);
         $response->assertDontSee('<select name="memilikiFasilitas"', false);
         $response->assertSee('<option value="" hidden', false);
-        $response->assertSee('>Urutan bawaan</option>', false);
+        $response->assertSee('>Urutan</option>', false);
         $response->assertDontSee('Urutan otomatis');
         $this->assertNotEmpty($filterOptions['activities']);
         $response->assertSee('value="'.e($filterOptions['activities'][0]).'"', false);
