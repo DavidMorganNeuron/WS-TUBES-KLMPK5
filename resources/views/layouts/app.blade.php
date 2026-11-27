@@ -214,8 +214,8 @@
         <!-- KONTEN UTAMA -->
         <main id="chatbot-body-container" class="relative flex min-h-0 flex-1 flex-col bg-white">
             <section id="chatbot-conversation" class="flex min-h-0 flex-1 flex-col">
-                <div id="chat-messages" class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-6 sm:px-8" role="log" aria-live="polite" aria-relevant="additions">
-                    <div id="chat-message-list" class="mx-auto flex w-full max-w-3xl flex-col gap-5">
+                <div id="chat-messages" data-lenis-prevent class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain px-4 py-6 sm:px-8" role="log" aria-live="polite" aria-relevant="additions">
+                    <div id="chat-message-list" class="mx-auto flex w-full max-w-3xl shrink-0 flex-col gap-5">
                         <article class="flex justify-start" aria-label="Balasan WayFinder AI">
                             <div class="prose prose-sm max-w-[90%] break-words rounded-2xl rounded-tl-sm border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm sm:max-w-[80%]">
                                 Halo! Ada destinasi wisata di Sumatera Utara yang ingin Anda cari atau tanyakan?
