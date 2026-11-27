@@ -18,11 +18,11 @@
                     {{ \App\Support\IndonesianFormat::number($facets['total']) }} destinasi pilihan dari ontologi pariwisata Sumatera Utara.
                 </p>
             </div>
-            <form action="{{ route('destinations') }}" method="GET" class="flex w-full lg:w-auto gap-2" data-live-suggest data-suggest-url="{{ route('destinations.suggest') }}" autocomplete="off" role="search" data-reveal-up>
-                <div class="relative flex-grow lg:w-72">
+            <form action="{{ route('destinations') }}" method="GET" class="relative z-[100] flex w-full lg:w-auto gap-2" data-live-suggest data-suggest-url="{{ route('destinations.suggest') }}" autocomplete="off" role="search" data-reveal-up>
+                <div class="relative z-[110] flex-grow lg:w-72">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
                     <input type="text" name="q" placeholder="Cari destinasi..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-primary" autocomplete="off" aria-label="Cari destinasi" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="dashboard-search-suggestions" aria-expanded="false">
-                    <div id="dashboard-search-suggestions" data-suggest-panel class="absolute left-0 right-0 top-full z-50 mt-2 hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl" role="listbox" aria-label="Saran destinasi"></div>
+                    <div id="dashboard-search-suggestions" data-suggest-panel class="absolute left-0 right-0 top-full z-[120] mt-2 hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl" role="listbox" aria-label="Saran destinasi"></div>
                     <p data-suggest-status class="sr-only" role="status" aria-live="polite"></p>
                 </div>
                 <button type="submit" class="bg-brand-dark hover:bg-gray-800 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition">Cari</button>

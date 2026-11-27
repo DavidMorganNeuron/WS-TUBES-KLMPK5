@@ -290,7 +290,9 @@ const initLiveDestinations = () => {
     const debouncedUpdate = debounce(() => update());
 
     input?.addEventListener('input', debouncedUpdate);
-    form.querySelectorAll('select').forEach((select) => select.addEventListener('change', () => update()));
+    Array.from(form.elements)
+        .filter((element) => element instanceof HTMLSelectElement)
+        .forEach((select) => select.addEventListener('change', () => update()));
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         update();
@@ -400,7 +402,7 @@ const initLiveMap = () => {
             setText('map-footer-marker-count', numberFormatter.format(payload.markerCount));
 
             if (window.LiveMap && typeof window.LiveMap.update === 'function') {
-                window.LiveMap.update(payload.markers);
+                window.LiveMap.update(payload.markers, { showAllIndividually: true });
             }
 
             announce(
@@ -472,9 +474,7 @@ const initLiveMap = () => {
     });
 };
 
-const initDashboardSuggestions = () => {
-    const form = document.querySelector('[data-live-suggest]');
-
+const initSearchSuggestions = (form) => {
     if (! form) {
         return;
     }
@@ -571,7 +571,7 @@ const initDashboardSuggestions = () => {
             activeIndex = -1;
 
             items.forEach((item, index) => {
-                item.id = `dashboard-suggestion-${index}`;
+                item.id = `${panel.id}-option-${index}`;
                 item.setAttribute('aria-selected', 'false');
             });
 
@@ -629,59 +629,6 @@ const initDashboardSuggestions = () => {
             closePanel();
         }
     });
-};
-
-const initMobileNavigation = () => {
-    const button = document.getElementById('btn-mobile-menu');
-    const menu = document.getElementById('mobile-menu');
-
-    if (! button || ! menu) {
-        return;
-    }
-
-    const setOpen = (open) => {
-        menu.classList.toggle('hidden', ! open);
-        menu.setAttribute('aria-hidden', open ? 'false' : 'true');
-        button.setAttribute('aria-expanded', open ? 'true' : 'false');
-        button.setAttribute('aria-label', open ? 'Tutup menu navigasi' : 'Buka menu navigasi');
-    };
-
-    button.addEventListener('click', () => {
-        setOpen(menu.classList.contains('hidden'));
-    });
-
-    menu.querySelectorAll('a').forEach((link) => {
-        link.addEventListener('click', () => setOpen(false));
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && ! menu.classList.contains('hidden')) {
-            setOpen(false);
-            button.focus();
-        }
-    });
-
-    document.addEventListener('click', (event) => {
-        if (menu.classList.contains('hidden')) {
-            return;
-        }
-
-        if (! menu.contains(event.target) && ! button.contains(event.target)) {
-            setOpen(false);
-        }
-    });
-
-    const desktopQuery = window.matchMedia('(min-width: 1024px)');
-
-    const closeOnDesktop = (event) => {
-        if (event.matches) {
-            setOpen(false);
-        }
-    };
-
-    if (typeof desktopQuery.addEventListener === 'function') {
-        desktopQuery.addEventListener('change', closeOnDesktop);
-    }
 };
 
 const initShareButton = () => {
@@ -810,10 +757,9 @@ const initGlobalProgressBar = () => {
 const init = () => {
     initThemeToggle();
     initGlobalProgressBar();
-    initMobileNavigation();
     initLiveDestinations();
     initLiveMap();
-    initDashboardSuggestions();
+    document.querySelectorAll('[data-live-suggest]').forEach((form) => initSearchSuggestions(form));
     initShareButton();
     initChatbotWidget();
     initMaps();

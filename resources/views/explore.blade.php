@@ -2,18 +2,14 @@
 
 @section('content')
 @php
-    $activeType = $filters['jenis'] ?? '';
-    $activeKabupaten = $filters['kabupaten'] ?? '';
-    $activeSort = $filters['sort'] ?? '';
     $activeQuery = $filters['q'] ?? '';
-    $activeActivity = $filters['dapatMelakukan'] ?? '';
     $activeFacility = $filters['memilikiFasilitas'] ?? '';
-    $hasActiveFilters = $activeQuery !== '' || $activeType !== '' || $activeKabupaten !== '' || $activeActivity !== '' || $activeFacility !== '' || ($activeSort !== '' && $activeSort !== 'name');
-    $urlFor = function (array $overrides = []) use ($filters): string {
-        $params = array_merge($filters, $overrides);
-
-        return route('destinations', array_filter($params, static fn ($value): bool => $value !== null && $value !== ''));
-    };
+    $hasActiveFilters = $activeQuery !== ''
+        || ($filters['jenis'] ?? '') !== ''
+        || ($filters['kabupaten'] ?? '') !== ''
+        || ($filters['dapatMelakukan'] ?? '') !== ''
+        || $activeFacility !== ''
+        || (($filters['sort'] ?? '') !== '' && ($filters['sort'] ?? '') !== 'name');
 @endphp
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full overflow-x-hidden">
@@ -46,60 +42,78 @@
         </div>
     </div>
 
-    <!-- Filter Bar -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8 space-y-4" data-reveal-up>
-        <form id="destination-filters" action="{{ route('destinations') }}" method="GET" class="flex flex-col lg:flex-row gap-4 justify-between items-center" data-live-destinations data-live-url="{{ route('destinations.live') }}" autocomplete="off" role="search" aria-label="Cari dan saring destinasi">
-            @if ($activeType !== '')
-                <input type="hidden" name="jenis" value="{{ $activeType }}">
-            @endif
+    @php
+        $activeType = $filters['jenis'] ?? '';
+        $activeKabupaten = $filters['kabupaten'] ?? '';
+        $activeSort = $filters['sort'] ?? '';
+        $activeActivity = $filters['dapatMelakukan'] ?? '';
 
-            <div class="flex-grow w-full flex flex-col sm:flex-row sm:flex-wrap gap-3">
-                <div class="relative flex-grow min-w-[12rem]">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
-                    <input type="text" name="q" value="{{ $activeQuery }}" placeholder="Cari nama objek wisata, kaldera, atau pulau..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-brand-primary" autocomplete="off" aria-label="Saring destinasi berdasarkan nama">
-                </div>
-                <select name="sort" class="bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700 rounded-lg px-4 py-2 outline-none w-full sm:w-48" aria-label="Urutkan destinasi">
-                    <option value="" hidden @selected($activeSort === '')>Urutan bawaan</option>
-                    @foreach ($sorts as $value => $label)
-                        <option value="{{ $value }}" @selected($activeSort === $value)>{{ [
-                            'name' => 'Nama: A–Z',
-                            'rating' => 'Rating: tertinggi ke terendah',
-                            'rating_asc' => 'Rating: terendah ke tertinggi',
-                            'price_desc' => 'Harga: tertinggi ke terendah',
-                            'price_asc' => 'Harga: terendah ke tertinggi',
-                        ][$value] ?? $label }}</option>
-                    @endforeach
-                </select>
-                <select name="kabupaten" class="bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700 rounded-lg px-4 py-2 outline-none w-full sm:w-56" aria-label="Saring berdasarkan kabupaten atau kota">
-                    <option value="">Semua kabupaten dan kota</option>
-                    @foreach (array_keys($facets['kabupaten']) as $kabupaten)
-                        <option value="{{ $kabupaten }}" @selected($activeKabupaten === $kabupaten)>{{ $kabupaten }}</option>
-                    @endforeach
-                </select>
-                <select name="dapatMelakukan" class="bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700 rounded-lg px-4 py-2 outline-none w-full sm:w-56" aria-label="Saring berdasarkan aktivitas">
-                    <option value="">Semua aktivitas</option>
-                    @foreach ($filterOptions['activities'] as $activity)
-                        <option value="{{ $activity }}" @selected($activeActivity === $activity)>{{ $activity }}</option>
-                    @endforeach
-                </select>
-            </div>
+        $urlFor = function (array $overrides = []) use ($filters): string {
+            $params = array_merge($filters, $overrides);
 
-        </form>
+            return route('destinations', array_filter(
+                $params,
+                static fn ($value): bool => $value !== null && $value !== ''
+            ));
+        };
+    @endphp
 
-        <p id="destination-live-status" class="sr-only" role="status" aria-live="polite"></p>
-
-        <div class="flex flex-wrap justify-center gap-2 pt-2 border-t border-gray-100" data-category-pills>
-            <a href="{{ $urlFor(['jenis' => null, 'page' => null]) }}" data-jenis="" class="text-xs font-bold px-3 py-1.5 rounded-full transition {{ $activeType === '' ? 'bg-brand-dark text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300' }}">
+    <section class="mb-8 space-y-3" aria-label="Filter destinasi">
+        {{-- Tab kategori --}}
+        <div class="flex items-center gap-6 overflow-x-auto border-b border-slate-200"
+             data-category-pills>
+            <a href="{{ $urlFor(['jenis' => null, 'page' => null]) }}"
+               data-jenis=""
+               class="shrink-0 border-b-2 px-1 py-3 text-sm whitespace-nowrap
+                   {{ $activeType === '' ? 'border-emerald-900 font-semibold text-emerald-950' : 'border-transparent font-medium text-slate-600 hover:text-slate-900' }}">
                 Semua Kategori
             </a>
+
             @foreach ($types as $type)
-                <a href="{{ $urlFor(['jenis' => $type, 'page' => null]) }}" data-jenis="{{ $type }}" class="text-xs font-medium px-3 py-1.5 rounded-full transition {{ $activeType === $type ? 'bg-brand-primary text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300' }}">
+                <a href="{{ $urlFor(['jenis' => $type, 'page' => null]) }}"
+                   data-jenis="{{ $type }}"
+                   class="shrink-0 border-b-2 px-1 py-3 text-sm whitespace-nowrap
+                       {{ $activeType === $type ? 'border-emerald-900 font-semibold text-emerald-950' : 'border-transparent font-medium text-slate-600 hover:text-slate-900' }}">
                     {{ $type }}
                 </a>
             @endforeach
-            <a id="destination-reset" href="{{ route('destinations') }}" class="text-xs font-medium px-3 py-1.5 rounded-full transition bg-white border border-gray-200 text-brand-accent hover:border-brand-accent {{ $hasActiveFilters ? '' : 'hidden' }}">Hapus filter</a>
         </div>
-    </div>
+
+        {{-- Filter urutan, kabupaten/kota, dan aktivitas --}}
+        <div class="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-3">
+            <select name="sort" form="destination-search-form" aria-label="Urutan destinasi">
+                <option value="" hidden @selected($activeSort === '')>Urutan</option>
+                @foreach ($sorts as $value => $label)
+                    <option value="{{ $value }}" @selected($activeSort === $value)>
+                        {{ $label }}
+                    </option>
+                @endforeach
+            </select>
+
+            <select name="kabupaten" form="destination-search-form"
+                    aria-label="Saring berdasarkan kabupaten atau kota">
+                <option value="">Semua Kabupaten/Kota</option>
+                @foreach (array_keys($facets['kabupaten']) as $kabupaten)
+                    <option value="{{ $kabupaten }}" @selected($activeKabupaten === $kabupaten)>
+                        {{ $kabupaten }}
+                    </option>
+                @endforeach
+            </select>
+
+            <select name="dapatMelakukan" form="destination-search-form"
+                    aria-label="Saring berdasarkan aktivitas">
+                <option value="">Semua Aktivitas</option>
+                @foreach ($filterOptions['activities'] as $activity)
+                    <option value="{{ $activity }}" @selected($activeActivity === $activity)>
+                        {{ $activity }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+    </section>
+
+    <p id="destination-live-status" class="sr-only" role="status" aria-live="polite"></p>
+    <a id="destination-reset" href="{{ route('destinations') }}" class="mb-8 inline-flex rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-brand-accent hover:border-brand-accent {{ $hasActiveFilters ? '' : 'hidden' }}">Hapus filter</a>
 
     <!-- Destination Grid -->
     <div id="destination-results" aria-busy="false">

@@ -107,6 +107,31 @@ class LiveSearchTest extends TestCase
         $this->assertCount($response->json('markerCount'), $response->json('markers'));
     }
 
+    public function test_map_category_filters_return_markers_with_category_colors(): void
+    {
+        foreach (DestinationRepository::TYPES as $type) {
+            $response = $this->getJson('/map/live?jenis='.urlencode($type));
+
+            $response->assertOk();
+            $markers = $response->json('markers');
+
+            $this->assertNotEmpty($markers, "Kategori {$type} tidak memiliki penanda pada peta.");
+
+            foreach ($markers as $marker) {
+                $this->assertContains(
+                    $type,
+                    $marker['types'] ?? [],
+                    "Penanda {$marker['name']} tidak sesuai kategori {$type}.",
+                );
+            }
+        }
+
+        $allResponse = $this->getJson('/map/live');
+
+        $allResponse->assertOk();
+        $this->assertGreaterThan(0, $allResponse->json('markerCount'));
+    }
+
     public function test_destination_suggestion_endpoint_returns_prefix_matches(): void
     {
         $response = $this->getJson('/destinations/suggest?q=Dan');

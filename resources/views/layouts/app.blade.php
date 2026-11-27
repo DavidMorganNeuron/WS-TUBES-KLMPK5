@@ -1,17 +1,8 @@
 @inject('navigationRepository', 'App\Services\Ontology\DestinationRepository')
 @php
     $navFacets = $navigationRepository->facets();
-    $navTypeLabels = [
-        'Alam' => 'Wisata Alam',
-        'Budaya' => 'Wisata Budaya',
-        'Religi' => 'Wisata Religi',
-        'Bahari' => 'Wisata Bahari',
-        'Kuliner' => 'Wisata Kuliner',
-        'Buatan' => 'Wisata Buatan',
-    ];
-    $activeJenis = request()->routeIs('destinations') ? request('jenis') : null;
-    $availableTypes = collect($navTypeLabels)
-        ->filter(fn (string $label, string $jenis): bool => ($navFacets['types'][$jenis] ?? 0) > 0);
+    $isDestinationIndex = request()->routeIs('destinations');
+    $destinationSearchFilters = ['jenis', 'kabupaten', 'sort', 'dapatMelakukan', 'memilikiFasilitas'];
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -51,44 +42,71 @@
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[10000] focus:rounded-lg focus:bg-brand-dark focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white">Lewati ke konten utama</a>
 
     <!-- NAVBAR -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-3">
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-[100] isolate">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex min-h-20 flex-wrap items-center gap-x-4 gap-y-3 py-3 xl:flex-nowrap">
             <!-- Logo -->
-            <a href="{{ route('home') }}" class="flex items-center gap-2 text-brand-primary font-serif font-bold text-base sm:text-xl min-w-0">
+            <a href="{{ route('home') }}" class="order-1 flex min-w-0 items-center gap-2 text-brand-primary font-serif font-bold text-base sm:text-xl">
                 <svg class="w-8 h-8 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13.5h-13L12 6.5z"/></svg>
                 <span class="hidden sm:inline truncate">WayFinder</span>
                 <span class="sm:hidden truncate">WayFinder</span>
             </a>
 
-            <!-- Menu Tengah -->
-            <nav class="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600" aria-label="Navigasi utama">
-                <a href="{{ route('home') }}" class="hover:text-brand-primary {{ request()->routeIs('home') ? 'border-b-2 border-brand-accent pb-1 text-brand-text' : '' }}">Beranda</a>
+            <form
+                id="destination-search-form"
+                action="{{ route('destinations') }}"
+                method="GET"
+                class="relative z-[100] order-3 flex w-full max-w-md flex-1 items-center gap-2 rounded-full border border-transparent bg-white px-4 py-2 shadow-sm focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-emerald-900 xl:order-2"
+                data-live-suggest data-suggest-url="{{ route('destinations.suggest') }}"
+                @if ($isDestinationIndex)
+                    data-live-destinations data-live-url="{{ route('destinations.live') }}"
+                @endif
+                autocomplete="off"
+                role="search"
+                aria-label="Cari destinasi wisata"
+            >
+                @if ($isDestinationIndex)
+                    @if (request()->filled('jenis'))
+                        <input type="hidden" name="jenis" value="{{ request('jenis') }}">
+                    @endif
+                @else
+                    @foreach ($destinationSearchFilters as $filterKey)
+                        @php($filterValue = request()->query($filterKey))
+                        @if (is_string($filterValue) && $filterValue !== '')
+                            <input type="hidden" name="{{ $filterKey }}" value="{{ $filterValue }}">
+                        @endif
+                    @endforeach
+                @endif
 
-                <a href="{{ route('destinations') }}" class="hover:text-brand-primary {{ request()->routeIs('destinations', 'destination.detail') ? 'border-b-2 border-brand-accent pb-1 text-brand-text' : '' }}">Destinasi</a>
-
-                <!-- Dropdown Jenis Wisata (Categories) -->
-                <div class="relative group">
-                    <button type="button" aria-haspopup="true" class="hover:text-brand-primary focus:outline-none {{ in_array($activeJenis, $availableTypes->keys()->all(), true) ? 'border-b-2 border-brand-accent pb-1 text-brand-text' : '' }}">
-                        Kategori
-                    </button>
-
-                    <div class="absolute left-0 top-full pt-3 hidden group-hover:block group-focus-within:block">
-                        <div class="w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-2">
-                            @foreach ($availableTypes as $jenis => $label)
-                                <a href="{{ route('destinations', ['jenis' => $jenis]) }}" class="flex items-center justify-between px-4 py-2 hover:bg-brand-light hover:text-brand-primary {{ $activeJenis === $jenis ? 'bg-brand-light text-brand-primary font-semibold' : '' }}">
-                                    {{ $label }}
-                                    <span class="text-xs text-brand-muted">{{ \App\Support\IndonesianFormat::number($navFacets['types'][$jenis]) }}</span>
-                                </a>
-                            @endforeach
-                        </div>
-                    </div>
+                <div class="relative z-[110] flex min-w-0 flex-1 items-center gap-2">
+                    <svg class="h-5 w-5 shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" stroke-width="2"/>
+                        <path stroke-linecap="round" stroke-width="2" d="m20 20-4-4"/>
+                    </svg>
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ request('q') }}"
+                        placeholder="Cari destinasi wisata di Sumatera Utara..."
+                        class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-0"
+                        aria-label="Cari destinasi wisata di Sumatera Utara"
+                        aria-autocomplete="list"
+                        aria-haspopup="listbox"
+                        aria-controls="navbar-search-suggestions"
+                        aria-expanded="false"
+                    >
+                    <div id="navbar-search-suggestions" data-suggest-panel class="absolute left-0 right-0 top-full z-[120] mt-2 hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl" role="listbox" aria-label="Saran destinasi"></div>
+                    <p data-suggest-status class="sr-only" role="status" aria-live="polite"></p>
                 </div>
+            </form>
 
+            <nav class="order-4 flex w-full items-center justify-center gap-6 text-sm font-medium text-gray-600 xl:order-3 xl:w-auto" aria-label="Navigasi utama">
+                <a href="{{ route('home') }}" class="hover:text-brand-primary {{ request()->routeIs('home') ? 'border-b-2 border-brand-accent pb-1 text-brand-text' : '' }}">Beranda</a>
+                <a href="{{ route('destinations') }}" class="hover:text-brand-primary {{ request()->routeIs('destinations', 'destination.detail') ? 'border-b-2 border-brand-accent pb-1 text-brand-text' : '' }}">Destinasi</a>
                 <a href="{{ route('map') }}" class="hover:text-brand-primary {{ request()->routeIs('map') ? 'border-b-2 border-brand-accent pb-1 text-brand-text' : '' }}">Peta</a>
             </nav>
 
             <!-- Tombol Kanan -->
-            <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div class="order-2 ml-auto flex flex-shrink-0 items-center gap-2 sm:gap-4 xl:order-4 xl:ml-0">
                 <button id="btn-theme-toggle" type="button" class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-primary" aria-label="Aktifkan mode gelap" aria-pressed="false" title="Aktifkan mode gelap">
                     <svg data-theme-icon="moon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                     <svg data-theme-icon="sun" class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
@@ -97,28 +115,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                     <span class="hidden sm:inline">Asisten AI</span>
                 </button>
-
-                <button id="btn-mobile-menu" type="button" class="lg:hidden w-10 h-10 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center justify-center" aria-controls="mobile-menu" aria-expanded="false" aria-label="Buka menu navigasi">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                </button>
             </div>
-        </div>
-
-        <!-- MOBILE MENU -->
-        <div id="mobile-menu" class="hidden lg:hidden border-t border-gray-200 bg-white" aria-hidden="true">
-            <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-1 text-sm font-medium text-gray-700" aria-label="Navigasi seluler">
-                <a href="{{ route('home') }}" class="block rounded-lg px-3 py-2 hover:bg-brand-light {{ request()->routeIs('home') ? 'bg-brand-light text-brand-primary' : '' }}">Beranda</a>
-                <a href="{{ route('destinations') }}" class="block rounded-lg px-3 py-2 hover:bg-brand-light {{ request()->routeIs('destinations', 'destination.detail') ? 'bg-brand-light text-brand-primary' : '' }}">Destinasi</a>
-                <a href="{{ route('map') }}" class="block rounded-lg px-3 py-2 hover:bg-brand-light {{ request()->routeIs('map') ? 'bg-brand-light text-brand-primary' : '' }}">Peta</a>
-
-                <p class="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Kategori</p>
-                @foreach ($availableTypes as $jenis => $label)
-                    <a href="{{ route('destinations', ['jenis' => $jenis]) }}" class="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-brand-light {{ $activeJenis === $jenis ? 'bg-brand-light text-brand-primary' : '' }}">
-                        <span>{{ $label }}</span>
-                        <span class="text-xs text-gray-400">{{ \App\Support\IndonesianFormat::number($navFacets['types'][$jenis]) }}</span>
-                    </a>
-                @endforeach
-            </nav>
         </div>
     </header>
 
@@ -191,7 +188,6 @@
         aria-labelledby="chatbot-title"
         aria-hidden="true"
         data-chat-url="{{ route('chatbot.send') }}"
-        data-lenis-prevent
         class="fixed inset-0 z-[9999] hidden h-[100dvh] w-screen flex-col overflow-hidden bg-white text-gray-900 shadow-2xl"
     >
         <!-- HEADER -->
@@ -218,7 +214,7 @@
         <!-- KONTEN UTAMA -->
         <main id="chatbot-body-container" class="relative flex min-h-0 flex-1 flex-col bg-white">
             <section id="chatbot-conversation" class="flex min-h-0 flex-1 flex-col">
-                <div id="chat-messages" data-lenis-prevent class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-6 sm:px-8" role="log" aria-live="polite" aria-relevant="additions">
+                <div id="chat-messages" class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-6 sm:px-8" role="log" aria-live="polite" aria-relevant="additions">
                     <div id="chat-message-list" class="mx-auto flex w-full max-w-3xl flex-col gap-5">
                         <article class="flex justify-start" aria-label="Balasan WayFinder AI">
                             <div class="prose prose-sm max-w-[90%] break-words rounded-2xl rounded-tl-sm border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm sm:max-w-[80%]">
@@ -247,14 +243,12 @@
         <button
             id="chatbot-resize-handle"
             type="button"
-            class="absolute top-1 left-1 z-30 hidden h-[18px] w-[18px] items-center justify-center rounded text-gray-400 transition hover:text-gray-700 cursor-nwse-resize touch-none select-none"
+            class="absolute bottom-1 right-1 z-20 hidden flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 cursor-nwse-resize touch-none"
             aria-label="Ubah ukuran jendela asisten"
             title="Tarik untuk mengubah ukuran"
         >
-            <svg class="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                <line x1="2" y1="12" x2="12" y2="2"/>
-                <line x1="2" y1="7" x2="7" y2="2"/>
-                <line x1="7" y1="12" x2="12" y2="7"/>
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 20h6v-6M10 20 20 10"/>
             </svg>
         </button>
         <p id="chatbot-status" class="sr-only" role="status" aria-live="polite"></p>

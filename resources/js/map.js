@@ -17,6 +17,46 @@ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character
     "'": '&#039;',
 }[character]));
 
+const destinationMarkerColor = (destination, markerColors) => {
+    const normalizeType = (value) => String(value ?? '').trim().toLocaleLowerCase('id');
+    const destinationTypes = Array.isArray(destination.types) ? destination.types : [];
+    const candidates = [destination.type, ...destinationTypes];
+
+    for (const candidate of candidates) {
+        const normalizedCandidate = normalizeType(candidate);
+        const matchingType = Object.keys(markerColors).find(
+            (type) => normalizeType(type) === normalizedCandidate,
+        );
+
+        if (matchingType) {
+            return markerColors[matchingType];
+        }
+    }
+
+    return '#0f5132';
+};
+
+const dominantMarkerColor = (destinations, markerColors) => {
+    const counts = new Map();
+
+    destinations.forEach((destination) => {
+        const color = destinationMarkerColor(destination, markerColors);
+        counts.set(color, (counts.get(color) ?? 0) + 1);
+    });
+
+    let dominantColor = '#0f5132';
+    let dominantCount = 0;
+
+    counts.forEach((count, color) => {
+        if (count > dominantCount) {
+            dominantColor = color;
+            dominantCount = count;
+        }
+    });
+
+    return dominantColor;
+};
+
 const markerInfoContent = (destination) => `
     <article style="box-sizing:border-box;width:min(320px,calc(100vw - 72px));min-width:250px;max-width:320px;padding:2px;font-family:Arial,sans-serif;font-size:13px;line-height:1.45;color:#111827;opacity:1">
         ${destination.image ? `<img src="${escapeHtml(destination.image)}" alt="${escapeHtml(destination.name)}" style="display:block;width:100%;height:140px;object-fit:cover;border-radius:8px;margin:0 0 9px">` : ''}
@@ -370,11 +410,25 @@ const initLeafletMapPage = (container, config) => {
     const clusterGroup = L.markerClusterGroup({
         showCoverageOnHover: false,
         maxClusterRadius: 50,
+        iconCreateFunction(cluster) {
+            const markersInCluster = cluster.getAllChildMarkers();
+            const destinations = markersInCluster
+                .map((marker) => marker.options.wayfinderDestination)
+                .filter(Boolean);
+            const color = dominantMarkerColor(destinations, markerColors);
+
+            return L.divIcon({
+                className: 'leaflet-marker-category-cluster',
+                html: `<div style="width:34px;height:34px;border-radius:9999px;background:${escapeHtml(color)};border:3px solid #ffffff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:#ffffff;font-size:11px;font-weight:700">${cluster.getChildCount()}</div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17],
+            });
+        },
     });
     const individualGroup = L.layerGroup();
     const markers = new Map();
     let bounds = [];
-    let showAllIndividually = false;
+    let showAllIndividually = config.showAllIndividually === true;
 
     tileLayer().addTo(map);
     map.addLayer(clusterGroup);
@@ -397,7 +451,7 @@ const initLeafletMapPage = (container, config) => {
                 return;
             }
 
-            const color = markerColors[destination.type] ?? '#0f5132';
+            const color = destinationMarkerColor(destination, markerColors);
             const icon = L.divIcon({
                 className: '',
                 html: `<div style="width:18px;height:18px;border-radius:9999px;background:${escapeHtml(color)};border:2px solid #ffffff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>`,
@@ -405,13 +459,35 @@ const initLeafletMapPage = (container, config) => {
                 iconAnchor: [9, 9],
             });
 
-            const marker = L.marker([latitude, longitude], { icon })
+            const marker = L.marker([latitude, longitude], { icon, wayfinderDestination: destination })
                 .bindPopup(markerInfoContent(destination));
 
             (showAllIndividually ? individualGroup : clusterGroup).addLayer(marker);
             markers.set(destination.id, marker);
             bounds.push([latitude, longitude]);
         });
+
+        if (showAllIndividually) {
+            map.removeLayer(clusterGroup);
+            map.addLayer(individualGroup);
+        } else {
+            map.removeLayer(individualGroup);
+            map.addLayer(clusterGroup);
+        }
+
+        const button = document.querySelector('[data-map-all]');
+
+        if (button) {
+            const label = showAllIndividually ? 'Tampilkan penanda berkelompok' : 'Tampilkan penanda satu per satu';
+            button.textContent = showAllIndividually ? 'KELOMPOK' : 'SATUAN';
+            button.setAttribute('aria-label', label);
+            button.setAttribute('title', label);
+            button.setAttribute('aria-pressed', String(showAllIndividually));
+            button.classList.toggle('bg-brand-accent', showAllIndividually);
+            button.classList.toggle('text-white', showAllIndividually);
+            button.classList.toggle('bg-white', ! showAllIndividually);
+            button.classList.toggle('text-gray-700', ! showAllIndividually);
+        }
     };
 
     const toggleAllMarkers = () => {
@@ -478,7 +554,10 @@ const initLeafletMapPage = (container, config) => {
     window.focusMarker = focusMarker;
     window.toggleSidebar = toggleSidebar;
     window.LiveMap = {
-        update(destinations) {
+        update(destinations, options = {}) {
+            showAllIndividually = options.showAllIndividually === true
+                ? true
+                : showAllIndividually;
             renderMarkers(destinations);
             fitMap();
         },
@@ -549,7 +628,7 @@ const initGoogleMapPage = (container, config, maps) => {
     const markers = new Map();
     let clusterMarkers = [];
     let destinations = [];
-    let showAllIndividually = false;
+    let showAllIndividually = config.showAllIndividually === true;
     let destinationMarkersHidden = false;
     let routeFitGeneration = 0;
     let routeFitPending = false;
@@ -637,7 +716,7 @@ const initGoogleMapPage = (container, config, maps) => {
         }));
 
         destinations.forEach((destination) => {
-            const color = markerColors[destination.type] ?? '#0f5132';
+            const color = destinationMarkerColor(destination, markerColors);
             const marker = new maps.Marker({
                 map,
                 position: { lat: destination.latitude, lng: destination.longitude },
@@ -678,6 +757,7 @@ const initGoogleMapPage = (container, config, maps) => {
             groups.filter((group) => group.length > 1).forEach((group) => {
                 const center = centerOf(group);
                 const position = { lat: center.latitude, lng: center.longitude };
+                const clusterColor = dominantMarkerColor(group, markerColors);
                 const marker = new maps.Marker({
                     map,
                     position,
@@ -685,7 +765,7 @@ const initGoogleMapPage = (container, config, maps) => {
                     icon: {
                         path: maps.SymbolPath.CIRCLE,
                         scale: 17,
-                        fillColor: '#0f5132',
+                        fillColor: clusterColor,
                         fillOpacity: 1,
                         strokeColor: '#ffffff',
                         strokeWeight: 2,
@@ -1357,7 +1437,10 @@ const initGoogleMapPage = (container, config, maps) => {
     window.focusMarker = focusMarker;
     window.toggleSidebar = toggleSidebar;
     window.LiveMap = {
-        update(items) {
+        update(items, options = {}) {
+            showAllIndividually = options.showAllIndividually === true
+                ? true
+                : showAllIndividually;
             renderMarkers(items);
             fitMap();
         },
