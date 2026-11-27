@@ -241,6 +241,7 @@ class ChatbotController extends Controller
         'toko suvenir' => ['toko suvenir', 'oleh-oleh'],
     ];
 
+    /** Memvalidasi pesan masuk dan mengembalikan respons aman jika alur chatbot gagal. */
     public function chat(Request $request, DestinationRepository $repository): JsonResponse
     {
         $validated = $request->validate([
@@ -262,6 +263,8 @@ class ChatbotController extends Controller
     }
 
     /**
+     * Menjalankan urutan balasan lokal, Gemini, pencarian cadangan, dan respons aman.
+     *
      * @param  array{message: string, history?: list<array{role: string, text: string}>}  $validated
      */
     private function processChat(array $validated, DestinationRepository $repository): JsonResponse
@@ -360,6 +363,8 @@ class ChatbotController extends Controller
     }
 
     /**
+     * Memakai cache jika tersedia, lalu meminta Gemini menyusun jawaban dari kandidat.
+     *
      * @param  list<array{role: string, text: string}>  $history
      * @param  array{clean: string, corrected: string, isRecommendationIntent: bool}  $normalizedQuery
      * @param  array<string, mixed>  $intent
@@ -470,6 +475,7 @@ class ChatbotController extends Controller
     /**
      * @param  list<array{role: string, text: string}>  $history
      */
+    /** Membentuk kunci cache dari pertanyaan, filter pencarian, riwayat, dan model. */
     private function geminiCacheKey(string $normalizedQuestion, array $history, array $intent): string
     {
         $question = Str::lower(trim(preg_replace('/\s+/u', ' ', $normalizedQuestion) ?? $normalizedQuestion));
@@ -1631,6 +1637,7 @@ class ChatbotController extends Controller
         return ($destination->lowestPrice() ?? null) === 0.0;
     }
 
+    /** Bentuk URL generateContent dari konfigurasi endpoint dan model Gemini. */
     private function endpoint(): string
     {
         $endpoint = (string) config('services.gemini.endpoint');
@@ -1640,6 +1647,8 @@ class ChatbotController extends Controller
     }
 
     /**
+     * Mengubah riwayat percakapan ke format input yang diterima Gemini.
+     *
      * @param  list<array{role: string, text: string}>  $history
      * @return list<array{role: string, parts: list<array{text: string}>}>
      */
@@ -1662,6 +1671,8 @@ class ChatbotController extends Controller
     }
 
     /**
+     * Membatasi jawaban Gemini pada fakta dan jumlah kandidat yang sudah dipilih.
+     *
      * @param  array<string, mixed>  $intent
      * @param  Collection<int, Destination>  $candidates
      */
@@ -1696,6 +1707,8 @@ PROMPT;
     }
 
     /**
+     * Menyusun konteks destinasi terpilih sebagai sumber fakta untuk Gemini.
+     *
      * @param  array<string, mixed>  $intent
      * @param  Collection<int, Destination>  $candidates
      */

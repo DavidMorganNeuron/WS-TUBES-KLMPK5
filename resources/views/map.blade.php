@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @php
+    // Siapkan konfigurasi dan data peta yang akan dipakai JavaScript.
     $googleMapsKey = config('services.google_maps.key');
     $activeType = $filters['jenis'] ?? '';
     $activeQuery = $filters['q'] ?? '';
@@ -198,6 +199,7 @@
 @endsection
 
 @push('scripts')
+{{-- Teruskan konfigurasi peta Laravel ke modul peta di browser. --}}
 <script>
     window.WayFinderMapConfig = @json($mapConfig);
 </script>

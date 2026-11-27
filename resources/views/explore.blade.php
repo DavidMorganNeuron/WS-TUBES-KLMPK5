@@ -28,7 +28,7 @@
             <div>
                 <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4" data-reveal-words>Jelajahi Destinasi Sumatera Utara</h1>
                 <p class="text-gray-600 text-lg max-w-2xl" data-reveal-up>
-                    Temukan {{ \App\Support\IndonesianFormat::number($facets['total']) }} destinasi pilihan dari ontologi pariwisata, mulai dari keajaiban alam dan monumen bersejarah hingga pengalaman budaya di Sumatera Utara.
+                    Temukan {{ \App\Support\IndonesianFormat::number($facets['total']) }} destinasi pilihan di Sumatera Utara, dari pesona alam dan situs bersejarah hingga pengalaman budaya.
                 </p>
             </div>
             <div class="flex gap-3" data-reveal-up>

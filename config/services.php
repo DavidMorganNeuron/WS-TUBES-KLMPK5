@@ -35,10 +35,12 @@ return [
         ],
     ],
 
+    // Key untuk peta browser dan permintaan rute dari server.
     'google_maps' => [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    // Pengaturan model dan endpoint Gemini yang dipakai chatbot di server.
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),

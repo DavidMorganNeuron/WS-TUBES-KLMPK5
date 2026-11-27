@@ -74,6 +74,7 @@ const markerInfoContent = (destination) => `
 
 let googleMapsPromise = null;
 
+// Muat Google Maps sekali saja dan gunakan kembali promise saat diperlukan.
 const loadGoogleMapsApi = (apiKey) => {
     if (window.google?.maps?.Map) {
         return Promise.resolve(window.google.maps);
@@ -404,6 +405,7 @@ const initMapLegendResize = (mapContainer) => {
     });
 };
 
+// Tampilkan peta OpenStreetMap sebagai provider alternatif.
 const initLeafletMapPage = (container, config) => {
     const markerColors = config.colors ?? {};
     const map = L.map(container).setView([2.8, 98.6], 8);
@@ -600,6 +602,7 @@ const initLeafletMapPage = (container, config) => {
     fitMap();
 };
 
+// Tampilkan seluruh penanda destinasi menggunakan Google Maps.
 const initGoogleMapPage = (container, config, maps) => {
     const markerColors = config.colors ?? {};
     const legend = container.querySelector('[data-map-legend]');
@@ -1128,6 +1131,7 @@ const initGoogleMapPage = (container, config, maps) => {
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            // Kirim koordinat ke backend Laravel; server yang memanggil Google Routes API.
             const response = await fetch(config.routeComputeUrl, {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -1642,6 +1646,7 @@ const initLeafletDetailMap = (container, latitude, longitude) => {
     marker.openPopup();
 };
 
+// Peta detail memakai Google Maps jika tersedia, lalu beralih ke Leaflet.
 const initDetailMap = () => {
     const container = document.getElementById('detail-map');
 
@@ -1673,6 +1678,7 @@ const initDetailMap = () => {
     initLeafletDetailMap(container, latitude, longitude);
 };
 
+// Pilih provider peta dan siapkan fallback untuk halaman peta maupun detail.
 export const initMaps = () => {
     const container = document.getElementById('map');
     const config = window.WayFinderMapConfig ?? {};

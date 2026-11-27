@@ -219,6 +219,9 @@ final readonly class Destination
             : (string) config('ontology.unknown_label');
     }
 
+    /**
+     * Membuat tautan pencarian Google Maps berdasarkan koordinat atau alamat.
+     */
     public function mapsUrl(): string
     {
         if ($this->hasCoordinates()) {
@@ -228,6 +231,9 @@ final readonly class Destination
         return 'https://www.google.com/maps/search/?api=1&query='.rawurlencode(trim($this->name.' '.$this->address));
     }
 
+    /**
+     * Membuat tautan petunjuk arah Google Maps untuk destinasi ini.
+     */
     public function directionsUrl(): string
     {
         $destination = $this->hasCoordinates()

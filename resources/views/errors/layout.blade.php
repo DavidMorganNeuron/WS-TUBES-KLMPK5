@@ -376,7 +376,7 @@
     <footer class="site-footer">
         <div class="site-footer__inner">
             <span>&copy; {{ \App\Support\IndonesianFormat::year((int) date('Y')) }} WayFinder</span>
-            <span>Proyek ontologi pariwisata · Sumatera Utara</span>
+            <span>Panduan wisata Sumatera Utara</span>
         </div>
     </footer>
     <script>

@@ -171,7 +171,7 @@
             </div>
         </div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 gap-4">
-            <p>© {{ \App\Support\IndonesianFormat::year((int) date('Y')) }} WayFinder. Proyek ontologi pariwisata.</p>
+            <p>© {{ \App\Support\IndonesianFormat::year((int) date('Y')) }} WayFinder. Panduan wisata Sumatera Utara.</p>
             <div class="flex flex-wrap justify-center gap-6">
                 <a href="{{ route('destinations') }}" class="hover:text-white">Destinasi</a>
                 <a href="{{ route('map') }}" class="hover:text-white">Peta</a>
@@ -180,7 +180,7 @@
         </div>
     </footer>
 
-    <!-- CHATBOT DIALOG -->
+    <!-- Dialog chatbot; URL mengarah ke backend, bukan langsung ke API Gemini. -->
     <div
         id="wayfinder-chatbot"
         role="dialog"

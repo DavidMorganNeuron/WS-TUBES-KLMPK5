@@ -15,7 +15,7 @@
             <div>
                 <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4" data-reveal-words>Jelajahi destinasi Sumatera Utara</h1>
                 <p class="text-gray-600 text-lg max-w-2xl" data-reveal-up>
-                    {{ \App\Support\IndonesianFormat::number($facets['total']) }} destinasi pilihan dari ontologi pariwisata Sumatera Utara.
+                    Ada {{ \App\Support\IndonesianFormat::number($facets['total']) }} destinasi wisata pilihan untuk Anda jelajahi di Sumatera Utara.
                 </p>
             </div>
             <form action="{{ route('destinations') }}" method="GET" class="relative z-[100] flex w-full lg:w-auto gap-2" data-live-suggest data-suggest-url="{{ route('destinations.suggest') }}" autocomplete="off" role="search" data-reveal-up>

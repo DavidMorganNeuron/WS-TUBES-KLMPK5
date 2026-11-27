@@ -4,7 +4,7 @@
 
 @section('title', 'Halaman tidak ditemukan')
 
-@section('message', $message ?? 'Halaman yang Anda cari tidak ditemukan atau ID destinasi tidak tersedia di dalam ontologi.')
+@section('message', $message ?? 'Halaman yang Anda cari tidak ditemukan. Periksa kembali alamat atau jelajahi destinasi yang tersedia.')
 
 @section('actions')
     <a href="{{ url('/') }}" class="button button--primary">Kembali ke beranda</a>

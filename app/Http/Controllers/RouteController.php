@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\Log;
 
 class RouteController extends Controller
 {
+    /** Endpoint Google Routes API untuk menghitung rute. */
     private const ENDPOINT = 'https://routes.googleapis.com/directions/v2:computeRoutes';
 
+    /** Field respons rute yang dibutuhkan antarmuka peta. */
     private const FIELD_MASK = 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.description,routes.routeLabels,routes.legs.steps.navigationInstruction,routes.legs.steps.distanceMeters';
 
+    /** Validasi koordinat, panggil Routes API, lalu cache hasil rute. */
     public function compute(Request $request): JsonResponse
     {
         $validated = $request->validate([

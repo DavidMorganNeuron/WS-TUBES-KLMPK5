@@ -209,7 +209,7 @@
                     @forelse ($paragraphs as $paragraph)
                         <p>{{ $paragraph }}</p>
                     @empty
-                        <p>{{ $destination->shortDescription !== '' ? $destination->shortDescription : 'Deskripsi lengkap destinasi ini belum tercatat dalam ontologi.' }}</p>
+                        <p>{{ $destination->shortDescription !== '' ? $destination->shortDescription : 'Deskripsi destinasi ini belum tersedia.' }}</p>
                     @endforelse
                 </div>
 
@@ -225,7 +225,7 @@
                     <div>
                         <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Provinsi</p>
                         <p class="font-bold text-sm text-gray-900">{{ $destination->province() }}</p>
-                        <p class="text-[10px] text-gray-500">Wilayah dalam ontologi</p>
+                        <p class="text-[10px] text-gray-500">Wilayah administratif</p>
                     </div>
                     <div>
                         <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Kategori</p>
@@ -474,7 +474,7 @@
     </div>
 
     @if ($crossCategory->isEmpty())
-        <p class="text-sm text-gray-500">Tidak ada destinasi dari kategori lain dalam ontologi.</p>
+        <p class="text-sm text-gray-500">Belum ada destinasi dari kategori lain untuk ditampilkan.</p>
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" data-motion-grid>
             @foreach ($crossCategory as $item)
@@ -490,6 +490,7 @@
 @endsection
 
 @push('scripts')
+    {{-- Key ini dipakai modul peta untuk menampilkan lokasi destinasi. --}}
     <script>
         window.WayFinderMapConfig = {
             googleMapsKey: @json(config('services.google_maps.key')),

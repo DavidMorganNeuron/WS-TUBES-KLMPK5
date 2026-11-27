@@ -416,11 +416,13 @@ const initChatbot = () => {
             scrollToLatest();
 
             const controller = new AbortController();
+            // Batasi waktu tunggu agar antarmuka tidak tertahan saat koneksi lambat.
             timeoutId = window.setTimeout(() => {
                 requestTimedOut = true;
                 controller.abort();
             }, 25000);
 
+            // Pesan dikirim ke backend; pemanggilan Gemini dan fallback ditangani di server.
             const response = await fetch(chatUrl, {
                 method: 'POST',
                 headers: {

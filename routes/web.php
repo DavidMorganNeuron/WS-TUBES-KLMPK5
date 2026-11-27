@@ -46,6 +46,7 @@ Route::post('/routes/compute', [RouteController::class, 'compute'])
     ->middleware('throttle:20,1')
     ->name('routes.compute');
 
+// Endpoint untuk pesan chatbot; backend mengatur Gemini dan fallback lokal.
 Route::post('/chat', [ChatbotController::class, 'chat'])
     ->middleware('throttle:10,1')
     ->name('chatbot.send');

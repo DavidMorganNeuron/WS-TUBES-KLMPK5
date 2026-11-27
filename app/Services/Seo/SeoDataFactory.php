@@ -14,7 +14,7 @@ final class SeoDataFactory
     {
         return $this->build(
             title: 'WayFinder — Destinasi Wisata Sumatera Utara',
-            description: 'Jelajahi destinasi wisata Sumatera Utara melalui data berbasis ontologi.',
+            description: 'Jelajahi destinasi wisata Sumatera Utara melalui pencarian, peta interaktif, dan informasi perjalanan.',
             canonicalUrl: route('home'),
         );
     }

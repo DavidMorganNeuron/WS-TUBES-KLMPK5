@@ -32,10 +32,18 @@ class DestinationPagesTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('Dasbor ontologi langsung');
+        $response->assertSee('destinasi wisata pilihan untuk Anda jelajahi');
         $response->assertSee(number_format($this->repository()->facets()['total']));
+        $response->assertDontSee('ontologi');
         $response->assertDontSee('Acehnese');
         $response->assertDontSee('Serambi');
+    }
+
+    public function test_public_pages_do_not_display_internal_ontology_terminology(): void
+    {
+        foreach (['/destinations', '/destinations/ws-148', '/map', '/destinations/ws-999'] as $path) {
+            $this->get($path)->assertDontSee('ontologi');
+        }
     }
 
     public function test_shared_layout_includes_theme_toggle_and_skeleton_image_placeholder(): void
